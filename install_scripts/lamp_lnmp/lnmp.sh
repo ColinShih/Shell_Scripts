@@ -166,7 +166,8 @@ mysql_config(){
 #    mkdir -p /data/mysql
     echo "Start to configure mysql, pls wait for a moment..."
     chown -R mysql:mysql $mysql_dir
-    $mysql_dir/scripts/mysql_install_db  --basedir=$mysql_dir --datadir=$mysql_dir/data --user=mysql  &>/dev/null
+    $mysql_dir/scripts/mysql_install_db  --basedir=$mysql_dir --datadir=$mysql_dir/data --user=$user\
+     --pid-file=/usr/local/mysql/data/mysql.pid &>/dev/null
     cp $mysql_dir/support-files/my-default.cnf  /etc/my.cnf
     cp $mysql_dir/support-files/mysql.server  /etc/init.d/mysqld
     sed -i "s#^basedir=#basedir=$mysql_dir#" /etc/init.d/mysqld
