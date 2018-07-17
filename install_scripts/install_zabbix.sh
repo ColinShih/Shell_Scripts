@@ -1,10 +1,10 @@
 ###########################################################
 #!/bin/bash
 # Author: Colin
-# Time: 2018-07-12 10:58:21
+# Time: 2018-06-03 10:58:21
 # Name: install_zabbix.sh
 # Version: v1.0
-# Description:this is to install lnmp environment
+# Description: install zabbix script
 # Attention: This is script is only for CentOS, the end of download file must be tar.gz
 ############################################################
 
@@ -14,9 +14,13 @@ if [ $machine != "x86_64" ];then
     exit 1
 fi
 download_dir=/home/colin/tools/auto_install
+#download_dir=`pwd`
 zabbix_dir=/usr/local/zabbix
-zabbix_download_url="http://fa/zabbix-3.4.11.tar.gz"
-create_database_script=/home/colin/tools/create.sql
+zabbix_download_url="https://jaist.dl.sourceforge.net/project/zabbix/ZABBIX%20Latest%20Stable/3.4.11/zabbix-3.4.11.tar.gz"
+create_database_script=`pwd`/create_database.sql
+nginx_dir=/usr/local/nginx
+php_dir=/usr/local/php
+php_user="www"
 
 [ -f /etc/init.d/functions ] && . /etc/init.d/functions
 [ -d $download_dir ] || mkdir -p $download_dir
@@ -103,7 +107,27 @@ zabbix_config(){
 
     mv $download_dir/$zabbix_folder/frontends/php/ /usr/local/nginx/html/zabbix
     chown -R nginx:nginx /usr/local/nginx/html/zabbix
+    rm -rf $download_dir/$zabbix_folder
     check "Zabbix configuration"
+}
+
+change_php_config(){
+#   change file php.ini 
+    sed -i "s/^post_max_size = 8M/post_max_size = 16M/" $php_dir/etc/php.ini
+    sed -i "s/^max_execution_time = 30/max_execution_time = 300/" $php_dir/etc/php.ini
+    sed -i "s/^max_input_time = 60/max_input_time = 300/" $php_dir/etc/php.ini
+    sed -i "s/^\;always_populate_raw_post_data = -1/always_populate_raw_post_data = -1/" $php_dir/etc/php.ini
+#   change file zabbix.conf.php
+    mv $nginx_dir/html/zabbix/conf/zabbix.conf.php.example $nginx_dir/html/zabbix/conf/zabbix.conf.php
+    chown $php_user $nginx_dir/html/zabbix/conf
+
+#    sed -i "s/^\$DB['PORT']             = '0';/\$DB['PORT']             = '3306';/" $nginx_dir/html/zabbix/conf/zabbix.conf.php
+#    sed -i "s/^\$DB['PASSWORD']         = '';/\$$DB['PASSWORD']         = '1234';/" $nginx_dir/html/zabbix/conf/zabbix.conf.php
+
+    killall php-fpm
+    /etc/init.d/php-fpm start
+    $nginx_dir/sbin/nginx -s stop
+    $nginx_dir/sbin/nginx
 }
 
 main(){
@@ -113,6 +137,7 @@ main(){
     sleep 1
     zabbix_config
     echo "Installation completed! "
+    change_php_config
     echo "Pls open Zabbix URL: http://<server_ip_or_name>/zabbix/setup.php in your brower and start installing frontend"
 }
 

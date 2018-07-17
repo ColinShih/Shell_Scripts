@@ -271,7 +271,7 @@ php_config(){
     rm -rf $download_dir/$php_folder
     #启动php-fpm
     [ `ps aux|grep php-fpm|wc -l` -le 1 ] && $php_dir/sbin/php-fpm
-#     /etc/init.d/php-fpm start
+     /etc/init.d/php-fpm start
 #    chkconfig php-fpm on
 }
 
