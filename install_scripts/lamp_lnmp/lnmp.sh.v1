@@ -1,0 +1,210 @@
+﻿###################################################
+#!/bin/bash
+# Author: Colin
+# Mail: 499219677@qq.com
+# Time: 2018-07-12 10:58:21
+# Name: a.sh
+# Version:1.0
+# Description:this is to install lnmp environment 
+# Attention: the end of download file must be tar.gz
+###################################################
+#判断系统，改脚本只适合64位系统
+machine=`uname -m`
+if [ $machine != "x86_64" ];then
+    echo "Your system is 32bit,but this script is only run on 64bit"
+    exit 1
+fi
+
+download_dir=/home/colin/tools/auto_install
+nginx_dir=/usr/local/nginx
+mysql_dir=/usr/local/mysql
+php_dir=/usr/local/php
+nginx_download_url="http://nginx.org/download/nginx-1.8.1.tar.gz"
+mysql_download_url="http://mirrors.sohu.com/mysql/MySQL-5.6/mysql-5.6.36-linux-glibc2.5-x86_64.tar.gz"
+php_download_url="http://mirrors.sohu.com/php/php-5.6.12.tar.gz"
+
+[ -d $download_dir ] || mkdir -p $download_dir
+[ -d $nginx_dir ] || mkdir -p $nginx_dir
+[ -d $mysql_dir ] || mkdir -p $mysql_dir
+[ -d $php_dir ] || mkdir -p $php_dir
+
+check(){
+    if [ $? -ne 0 ];then
+        echo "the last command executed failed, pls check it."
+        sleep 1
+        exit 1
+    else
+        echo "operaton completed"
+    fi
+}
+
+download_nginx(){
+    cd $download_dir
+    download_filename=`echo $nginx_download_url|awk -F "/" '{print $NF}'`
+    nginx_folder=`echo $download_filename|awk -F ".tar.gz" '{print $1}'`
+    ls $nginx_folder &>/dev/null
+    if [ $? -ne 0 ];then
+        echo "Starting downloading nginx.."
+        wget -nv $nginx_download_url -P $download_dir
+        check
+    fi
+}
+
+download_mysql(){
+    cd $download_dir
+    download_filename=`echo $mysql_download_url|awk -F "/" '{print $NF}'`
+    mysql_folder=`echo $download_filename|awk -F ".tar.gz" '{print $1}'`
+    ls $mysql_folder &>/dev/null   
+    if [ $? -ne 0 ];then
+        echo "Starting downloading mysql.."
+        wget -nv $mysql_download_url -P $download_dir
+        check
+    fi  
+}
+
+download_php(){
+    cd $download_dir
+    download_filename=`echo $php_download_url|awk -F "/" '{print $NF}'`
+    php_folder=`echo $download_filename|awk -F ".tar.gz" '{print $1}'`
+    ls $php_folder &>/dev/null   
+    if [ $? -ne 0 ];then
+        echo "Starting downloading php.."
+        wget -nv $php_download_url -P $download_dir
+        check
+    fi  
+}
+
+dependence_install(){
+    yum -y install vim-enhanced ncurses-devel elinks gcc gcc-c++ flex bison autoconf automake \
+    gzip net-snmp-devel net-snmp ncurses-devel pcre pcre-devel openssl openssl-devel\
+    libjpeg-devel libpng-devel libtiff-devel freetype-devel libXpm-devel gettext-devel  pam-devel libtool libtool-ltdl \
+    fontconfig-devel libxml2-devel curl-devel  libicu libicu-devel libmcrypt libmcrypt-devel libmhash libmhash-develi \
+    >/dev/null 2>&1
+    check
+}
+
+nginx_install(){    
+    #添加nginx用户
+    user='nginx'
+    group='nginx'
+    user_exists=$(id -nu $user)
+    if [ ! $user_exists ]; then
+     /usr/sbin/groupadd -f $group
+     /usr/sbin/useradd -g $group $user -s /sbin/nologin -M
+    fi
+     
+    #安装nginx
+    download_nginx
+    tar -zxf $download_filename && cd $nginx_folder
+    ./configure --prefix=$nginx_dir  --pid-path=$nginx_dir/nginx.pid   --user=nginx   --group=nginx --with-http_ssl_module \
+    --with-http_flv_module   --with-http_stub_status_module  --with-http_gzip_static_module --with-pcre &> /tmp/chk_config.log
+     
+    make -j2 &> /tmp/configure_nginx.log 
+    make install &> /tmp/make_install_nginx.log
+    rm -rf $download_dir/$nginx_folder
+}
+
+nginx_config(){    
+    #启动nginx
+    $nginx_dir/sbin/nginx
+     
+    #配置nginx
+    sed -i '56a\location ~ \.php$ {\n\    root          html;\n\    fastcgi_pass  127.0.0.1:9000;\n\    fastcgi_index  index.php;\n\    fastcgi_param  SCRIPT_FILENAME  /usr/local/nginx/html$fastcgi_script_name;\n\    include        fastcgi_params;\n\}\n' $nginx_dir/conf/nginx.conf
+    $nginx_dir/sbin/nginx -s reload
+    echo -e '<?php\n phpinfo(); \n ?>\n' >$nginx_dir/html/index.php
+}
+
+mysql_install(){
+    #添加mysql用户
+    user='mysql'
+    group='mysql'
+    user_exists=$(id -nu $user)
+    if [ ! $user_exists ]; then
+     /usr/sbin/groupadd -f $group
+     /usr/sbin/useradd -g $group $user -s /sbin/nologin -M
+    fi
+     
+    #安装Mysql
+    download_mysql
+    tar -zxf $download_filename && mv $mysql_folder/* $mysql_dir
+    echo "install mysql successfully.."
+}
+ 
+mysql_config(){
+    #配置mysql
+#    mkdir -p /data/mysql
+    chown -R mysql:mysql $mysql_dir
+    $mysql_dir/scripts/mysql_install_db  --basedir=$mysql_dir --datadir=$mysql_dir/data --user=mysql  &>/dev/null
+    cp $mysql_dir/support-files/my-default.cnf  /etc/my.cnf
+    cp $mysql_dir/support-files/mysql.server  /etc/init.d/mysqld
+    sed -i "s#^basedir=#basedir=$mysql_dir#" /etc/init.d/mysqld
+    sed -i "s#^datadir=#datadir=$mysql_dir/data#" /etc/init.d/mysqld
+     
+    #启动mysql
+#    service mysqld start
+#    chkconfig mysqld on
+}
+
+php_install(){
+    #添加php用户
+    #添加mysql用户
+    user='www'
+    group='www'
+    user_exists=$(id -nu $user)
+    if [ ! $user_exists ]; then
+     /usr/sbin/groupadd -f $group
+     /usr/sbin/useradd -g $group $user -s /sbin/nologin -M
+    fi
+     
+    #安装php
+    yum install -y libxml2-devel openssl-devel libcurl-devel libjpeg-devel libpng-devel libicu-devel openldap-devel >/dev/null 2>&1
+    download_php
+    tar -zxf $download_filename && cd $php_folder
+    ./configure --prefix=$php_dir --with-config-file-path=/$php_dir/etc\
+     --with-mysql=/usr/local/mysql  --with-mysqli=/$mysql_dir/bin/mysql_config\
+     --enable-fpm\
+     --enable-mbstring=all\
+     --enable-soap\
+     --enable-zip\
+     --enable-calendar\
+     --enable-bcmath\
+     --enable-exif\
+     --enable-ftp\
+     --enable-intl\
+     --with-openssl\
+     --with-zlib\
+     --with-curl\
+     --with-gd\
+     --with-zlib-dir=/usr/lib\
+     --with-png-dir=/usr/lib\
+     --with-jpeg-dir=/usr/lib\
+     --with-gettext\
+     --with-mhash\
+     --with-fpm-user=www\
+     --with-fpm-group=www &> /tmp/chk_php.log
+  
+    make -j2 &> /tmp/configure_php.log 
+    make install &> /tmp/make_install_php.log
+    rm -rf $download_dir/$php_folder
+}
+
+php_config(){
+    #配置php
+    cp php.ini-development  $php_dir/etc/php.ini
+    sed -i 's#^;date.timezone =#date.timezone=Asia/Shanghai#' $php_dir/etc/php.ini
+    cp  /usr/local/php/etc/php-fpm.conf.default  $php_dir/etc/php-fpm.conf
+    cp sapi/fpm/init.d.php-fpm /etc/init.d/php-fpm
+    chmod +x /etc/init.d/php-fpm
+     
+    #启动php-fpm
+#   service php-fpm start
+#   chkconfig php-fpm on
+}
+ 
+dependence_install
+nginx_install
+nginx_config
+mysql_install
+mysql_config
+php_install
+php_config
