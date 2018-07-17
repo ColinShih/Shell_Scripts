@@ -21,6 +21,7 @@ create_database_script=`pwd`/create_database.sql
 nginx_dir=/usr/local/nginx
 php_dir=/usr/local/php
 php_user="www"
+php_group="www"
 
 [ -f /etc/init.d/functions ] && . /etc/init.d/functions
 [ -d $download_dir ] || mkdir -p $download_dir
@@ -118,11 +119,16 @@ change_php_config(){
     sed -i "s/^max_input_time = 60/max_input_time = 300/" $php_dir/etc/php.ini
     sed -i "s/^\;always_populate_raw_post_data = -1/always_populate_raw_post_data = -1/" $php_dir/etc/php.ini
 #   change file zabbix.conf.php
-    mv $nginx_dir/html/zabbix/conf/zabbix.conf.php.example $nginx_dir/html/zabbix/conf/zabbix.conf.php
-    chown $php_user $nginx_dir/html/zabbix/conf
+    ls $nginx_dir/html/zabbix/conf/zabbix.conf.php.example &>/dev/null
+    [ $? -eq 0 ] && mv $nginx_dir/html/zabbix/conf/zabbix.conf.php.example $nginx_dir/html/zabbix/conf/zabbix.conf.php
+#    chown $php_user $nginx_dir/html/zabbix/conf
 
-#    sed -i "s/^\$DB['PORT']             = '0';/\$DB['PORT']             = '3306';/" $nginx_dir/html/zabbix/conf/zabbix.conf.php
-#    sed -i "s/^\$DB['PASSWORD']         = '';/\$$DB['PASSWORD']         = '1234';/" $nginx_dir/html/zabbix/conf/zabbix.conf.php
+    sed -i -e '7d' -e '10d' $nginx_dir/html/zabbix/conf/zabbix.conf.php
+    sed -i "6a\\\$DB\['PORT'\]             = '3306';" $nginx_dir/html/zabbix/conf/zabbix.conf.php
+    sed -i "9a\\\$DB\['PASSWORD'\]         = '1234';" $nginx_dir/html/zabbix/conf/zabbix.conf.php
+#    sed -i "s/^\$DB\['PORT'\]\t\t\t = '0';/\$DB\['PORT'\]             = '3306';/" $nginx_dir/html/zabbix/conf/zabbix.conf.php
+#    sed -i "s/^\$DB\['PASSWORD'\]\t\t\t = '';/\$DB\['PASSWORD'\]         = '1234';/" $nginx_dir/html/zabbix/conf/zabbix.conf.php
+    chown -R $php_user:$php_group $nginx_dir/html/zabbix/conf
 
     killall php-fpm
     /etc/init.d/php-fpm start
