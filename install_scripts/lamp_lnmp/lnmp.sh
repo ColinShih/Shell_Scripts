@@ -254,7 +254,7 @@ php_install(){
 #    --enable-ftp
 ###############################################################
     [ $? -eq 0 ] && action "Checking php options" /bin/true  
-    echo "Start to compile php configuration,pls wait for a moment..."
+    echo "Start to compile php configuration,it may take you a short time,pls be patient..."
     [ $? -eq 0 ] && make -j4 &> /tmp/configure_php.log
     check "Php compile"
     [ $? -eq 0 ] && make install &> /tmp/make_install_php.log
