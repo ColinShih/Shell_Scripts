@@ -55,7 +55,7 @@ check(){
         sleep 1
         exit 1
     else
-        action "$1 executing" /bin/true
+        action "$1" /bin/true
     fi
 }
 
@@ -172,7 +172,7 @@ mysql_config(){
     cp $mysql_dir/support-files/mysql.server  /etc/init.d/mysqld
     sed -i "s#^basedir=#basedir=$mysql_dir#" /etc/init.d/mysqld
     sed -i "s#^datadir=#datadir=$mysql_dir/data#" /etc/init.d/mysqld
-    [ $? -eq 0 ] && action "Mysql configure"
+    [ $? -eq 0 ] && action "Mysql configuration"
 
      /etc/init.d/mysqld start
 #    chkconfig mysqld on
@@ -253,11 +253,12 @@ php_install(){
 #    --with-fpm-group=nginx\ 
 #    --enable-ftp
 ###############################################################
-    [ $? -eq 0 ] && action "checking php options" /bin/true  
+    [ $? -eq 0 ] && action "Checking php options" /bin/true  
     echo "Start to compile php configuration,pls wait for a moment..."
-    [ $? -eq 0 ] && make -j4 &> /tmp/configure_php.log 
+    [ $? -eq 0 ] && make -j4 &> /tmp/configure_php.log
+    check "Php compile"
     [ $? -eq 0 ] && make install &> /tmp/make_install_php.log
-    check "php install"
+    check "Php install"
 }
 
 php_config(){
@@ -268,7 +269,7 @@ php_config(){
     cp  $php_dir/etc/php-fpm.conf.default  $php_dir/etc/php-fpm.conf
     cp sapi/fpm/init.d.php-fpm /etc/init.d/php-fpm
     chmod +x /etc/init.d/php-fpm
-    check "Configuration php" 
+    check "Php configuration" 
     rm -rf $download_dir/$php_folder
     #启动php-fpm
     [ `ps aux|grep php-fpm|wc -l` -le 1 ] && $php_dir/sbin/php-fpm
