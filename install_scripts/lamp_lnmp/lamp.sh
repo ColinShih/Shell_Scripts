@@ -8,18 +8,33 @@
 # Attention: the end of install download file must be tar.gz
 ############################################################
 
-version=`grep -o " [0-9]" /etc/redhat-release|cut -d" " -f2`
-if [ "$version" -eq 7 ];then
-    echo    "system version is CentOS 7"
-else [ "$version" -eq 6 ];
-    echo    "system version is CentOS 6"
-fi
-
+#version=`grep -o " [0-9]" /etc/redhat-release|cut -d" " -f2`
+#if [ "$version" -eq 7 ];then
+#    echo    "system version is CentOS 7"
+#else [ "$version" -eq 6 ];
+#    echo    "system version is CentOS 6"
+#fi
+#
 machine=`uname -m`
 if [ $machine != "x86_64" ];then
     echo "Your system is 32bit,but this script is only run on 64bit"
     exit 1
 fi
+
+download_dir=/home/colin/tools/auto_install
+apache_dir=/usr/local/apache2
+mysql_dir=/usr/local/mysql
+php_dir=/usr/local/php
+apache_download_url="http://mirrors.sohu.com/apache/httpd-2.4.34.tar.gz"
+mysql_download_url="http://mirrors.sohu.com/mysql/MySQL-5.6/mysql-5.6.36-linux-glibc2.5-x86_64.tar.gz"
+php_download_url="http://mirrors.sohu.com/php/php-5.6.12.tar.gz"
+
+
+[ -f /etc/init.d/functions ] && . /etc/init.d/functions
+[ -d $download_dir ] || mkdir -p $download_dir
+[ -d $apache_dir ] || mkdir -p $apache_dir
+[ -d $mysql_dir ] || mkdir -p $mysql_dir
+[ -d $php_dir ] || mkdir -p $php_dir
 
 cat <<EOF
     ####################################################################
@@ -31,22 +46,6 @@ cat <<EOF
     ####################################################################
 EOF
 read -p "Pls choose the nubmer above you want to operate: " num
-
-download_dir=/home/colin/tools/auto_install
-apache_dir=/usr/local/apache2
-mysql_dir=/usr/local/mysql
-php_dir=/usr/local/php
-apache_download_url="http://mirrors.sohu.com/apache/httpd-2.4.34.tar.gz"
-mysql_download_url="http://mirrors.sohu.com/mysql/MySQL-5.6/mysql-5.6.36-linux-glibc2.5-x86_64.tar.gz"
-php_download_url="http://mirrors.sohu.com/php/php-5.6.12.tar.gz"
-
-#mysql_conf_dir="/home/colin/conf/my.cnf"
-
-[ -f /etc/init.d/functions ] && . /etc/init.d/functions
-[ -d $download_dir ] || mkdir -p $download_dir
-[ -d $apache_dir ] || mkdir -p $apache_dir
-[ -d $mysql_dir ] || mkdir -p $mysql_dir
-[ -d $php_dir ] || mkdir -p $php_dir
 
 check(){
     if [ $? -ne 0 ];then
@@ -178,6 +177,7 @@ mysql_config(){
     echo "Start to configure mysql, pls wait for a moment..."
     chown -R mysql:mysql $mysql_dir
     $mysql_dir/scripts/mysql_install_db  --basedir=$mysql_dir --datadir=$mysql_dir/data --user=mysql  &>/dev/null
+    check "Check mysql options"
     cp $mysql_dir/support-files/my-default.cnf  /etc/my.cnf
     cp $mysql_dir/support-files/mysql.server  /etc/init.d/mysqld
     sed -i "s#^basedir=#basedir=$mysql_dir#" /etc/init.d/mysqld

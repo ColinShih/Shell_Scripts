@@ -22,17 +22,6 @@ if [ $machine != "x86_64" ];then
     exit 1
 fi
 
-cat <<EOF
-    ####################################################################
-    #             LNMP auto installation system                        #
-    #                  1) install nginx                                #
-    #                  2) install mysql                                #
-    #                  3) install php                                  #
-    #                  4) install lnmp                                 #
-    ####################################################################
-EOF
-read -p "Pls choose the nubmer above you want to operate: " num
-
 download_dir=/home/colin/tools/auto_install
 nginx_dir=/usr/local/nginx
 mysql_dir=/usr/local/mysql
@@ -48,6 +37,17 @@ php_download_url="http://mirrors.sohu.com/php/php-5.6.12.tar.gz"
 [ -d $nginx_dir ] || mkdir -p $nginx_dir
 [ -d $mysql_dir ] || mkdir -p $mysql_dir
 [ -d $php_dir ] || mkdir -p $php_dir
+
+cat <<EOF
+    ####################################################################
+    #             LNMP auto installation system                        #
+    #                  1) install nginx                                #
+    #                  2) install mysql                                #
+    #                  3) install php                                  #
+    #                  4) install lnmp                                 #
+    ####################################################################
+EOF
+read -p "Pls choose the nubmer above you want to operate: " num
 
 check(){
     if [ $? -ne 0 ];then

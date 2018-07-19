@@ -1,12 +1,13 @@
-###########################################################
+#########################################################################################
 #!/bin/bash
 # Author: Colin
 # Time: 2018-06-03 10:58:21
 # Name: install_zabbix.sh
 # Version: v1.0
-# Description: install zabbix script
-# Attention: This is script is only for CentOS, the end of download file must be tar.gz
-############################################################
+# Description: auto-install zabbix script
+# Attention: This is script is only for CentOS_x64,lnmp enviroment must be installed
+#            in advanced, the end of download file must be tar.gz
+########################################################################################
 
 machine=`uname -m`
 if [ $machine != "x86_64" ];then
@@ -14,7 +15,6 @@ if [ $machine != "x86_64" ];then
     exit 1
 fi
 download_dir=/home/colin/tools/auto_install
-#download_dir=`pwd`
 zabbix_dir=/usr/local/zabbix
 zabbix_download_url="https://jaist.dl.sourceforge.net/project/zabbix/ZABBIX%20Latest%20Stable/3.4.11/zabbix-3.4.11.tar.gz"
 create_database_script=`pwd`/create_database.sql
@@ -33,7 +33,7 @@ check(){
         sleep 1
         exit 1
     else
-        action "$1 executing" /bin/true
+        action "$1" /bin/true
     fi
 }
 
@@ -87,6 +87,7 @@ zabbix_config(){
     mysql -uroot -p'1234' zabbix < $download_dir/$zabbix_folder/database/mysql/schema.sql
     mysql -uroot -p'1234' zabbix < $download_dir/$zabbix_folder/database/mysql/images.sql
     mysql -uroot -p'1234' zabbix < $download_dir/$zabbix_folder/database/mysql/data.sql
+    check "Database created"
 
     #配置zabbix
     cd $zabbix_dir
