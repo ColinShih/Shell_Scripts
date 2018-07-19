@@ -1,7 +1,7 @@
 ###########################################################
 #!/bin/bash
 # Author: Colin
-# Time: 2018-07-10 09:51:21
+# Time: 2018-07-11 09:51:21
 # Name: lamp.sh
 # Version: v1.0
 # Description:this is to install lamp environment

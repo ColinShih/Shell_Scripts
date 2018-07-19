@@ -1,7 +1,7 @@
 ###########################################################
 #!/bin/bash
 # Author: Colin
-# Time: 2018-07-12 10:58:21
+# Time: 2018-07-09 12:49:28
 # Name: lnmp.sh
 # Version: v1.0
 # Description:this is to install lnmp environment
