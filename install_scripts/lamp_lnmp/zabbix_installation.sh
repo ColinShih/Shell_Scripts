@@ -5,10 +5,10 @@
 # Name: zabbix_installation.sh
 # Version: v1.0
 # Description: auto-install zabbix script
-# Attention: 1. This is script is only for CentOS_x64.
-#            2. lnmp enviroment must be installed in advanced.
-#            3. The end of download file must be tar.gz
-#	     4. Create_database.sql should be put in the same folder
+# Attention:    1. This is script is only for CentOS_x64.
+#               2. lnmp enviroment must be installed in advanced.
+#               3. The end of download file must be tar.gz
+#               4. Create_database.sql should be put in the same folder
 ########################################################################################
 
 machine=`uname -m`
@@ -103,16 +103,19 @@ zabbix_config(){
     sed -i "s/^# DBPassword=/DBPassword=1234/" $zabbix_dir/etc/zabbix_server.conf
     sed -i "s/^# DBSocket=\/tmp\/mysql.sock/DBSocket=\/tmp\/mysql.sock/" $zabbix_dir/etc/zabbix_server.conf
     sed -i "s/^# Include=\/usr\/local\/etc\/zabbix_server.conf.d\/\*.conf/Include=$zabbix_dir\/etc\/zabbix_server.conf.d\/*.conf/" $zabbix_dir/etc/zabbix_server.conf
-    
+    check "Server configuration change"
+
     #modify agentd_server.conf
     sed -i "s/^# PidFile=\/tmp\/zabbix_agentd.pid/PidFile=\/usr\/local\/zabbix\/logs\/zabbix_agentd.pid/" $zabbix_dir/etc/zabbix_agentd.conf
     sed -i "s/^LogFile=\/tmp\/zabbix_agentd.log/LogFile=\/usr\/local\/zabbix\/logs\/zabbix_agentd.log/" $zabbix_dir/etc/zabbix_agentd.conf
     sed -i "s/^# Include=\/usr\/local\/etc\/zabbix_agentd.conf.d\/\*.conf/Include=$zabbix_dir\/etc\/zabbix_agentd.conf.d\/*.conf/" $zabbix_dir/etc/zabbix_agentd.conf
+    check "Agent server change"
     #start zabbix_server&zabbix_agentd
     $zabbix_dir/sbin/zabbix_server
     $zabbix_dir/sbin/zabbix_agentd
+    check "Server start"
 
-    #move webpage to nginx server
+    #move webpage to  server
     mv $download_dir/$zabbix_folder/frontends/php/ /usr/local/nginx/html/zabbix
     chown -R nginx:nginx /usr/local/nginx/html/zabbix
     rm -rf $download_dir/$zabbix_folder
@@ -136,6 +139,7 @@ change_php_config(){
 #    sed -i "s/^\$DB\['PORT'\]\t\t\t = '0';/\$DB\['PORT'\]             = '3306';/" $nginx_dir/html/zabbix/conf/zabbix.conf.php
 #    sed -i "s/^\$DB\['PASSWORD'\]\t\t\t = '';/\$DB\['PASSWORD'\]         = '1234';/" $nginx_dir/html/zabbix/conf/zabbix.conf.php
     chown -R $php_user:$php_group $nginx_dir/html/zabbix/conf
+    check " Php config change"
 
     killall php-fpm
     /etc/init.d/php-fpm start
