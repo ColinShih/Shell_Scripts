@@ -1,9 +1,9 @@
 ###########################################################
 #!/bin/bash
 # Author: Colin
-# Time: 2018-07-11 09:51:21
+# Time: 2018-06-11 19:51:21
 # Name: lamp.sh
-# Version: v1.0
+# Version: v1.1
 # Description:this is to install lamp environment
 # Attention: the end of install download file must be tar.gz
 ############################################################
@@ -114,7 +114,6 @@ dependence_install(){
 }
 
 apache_install(){    
-    #添加apache用户
     user='apache'
     group='apache'
     user_exists=$(id -nu $user)
@@ -123,7 +122,7 @@ apache_install(){
         /usr/sbin/useradd -g $group $user -s /sbin/nologin -M
     fi
      
-    #安装apache
+    #install apache
     apache_download
     
     echo "Start to install apache, pls wait for a moment..."
@@ -142,7 +141,7 @@ apache_install(){
 
 apache_config(){    
      
-    #配置apache
+    #config apache
     sed -i "389a\\\tAddType application/x-httpd-php .php" $apache_dir/conf/httpd.conf
     sed -i 's/DirectoryIndex index.html/DirectoryIndex index.html index.htm index.php/' $apache_dir/conf/httpd.conf
     sed -i "s/^\#ServerName www.example.com:80/ServerName localhost:80/" $apache_dir/conf/httpd.conf
@@ -153,7 +152,6 @@ apache_config(){
 }
 
 mysql_install(){
-    #添加mysql用户
     user='mysql'
     group='mysql'
     user_exists=$(id -nu $user)
@@ -162,7 +160,7 @@ mysql_install(){
         /usr/sbin/useradd -g $group $user -s /sbin/nologin -M
     fi
      
-    #安装Mysql
+    #install Mysql
     mysql_download
     echo "Start to install mysql, pls wait for a moment..." 
     tar -zxf $download_file_mysql  
@@ -172,7 +170,7 @@ mysql_install(){
 }
  
 mysql_config(){
-    #配置mysql
+    #config mysql
 #    mkdir -p /data/mysql
     echo "Start to configure mysql, pls wait for a moment..."
     chown -R mysql:mysql $mysql_dir
@@ -183,13 +181,12 @@ mysql_config(){
     sed -i "s#^basedir=#basedir=$mysql_dir#" /etc/init.d/mysqld
     sed -i "s#^datadir=#datadir=$mysql_dir/data#" /etc/init.d/mysqld
     check "Configuration mysql" 
-    #启动mysql
-#    service mysqld start
+    #start mysql
+    /etc/init.d/mysqld start
 #    chkconfig mysqld on
 }
 
 php_install(){
-    #添加php用户
     user='www'
     group='www'
     user_exists=$(id -nu $user)
@@ -198,7 +195,7 @@ php_install(){
         /usr/sbin/useradd -g $group $user -s /sbin/nologin -M
     fi
      
-    #安装php,apxs是apache的php编译器
+    #install php,apxs is the php compiler of apache
     yum install -y libxml2-devel openssl-devel libcurl-devel libjpeg-devel libpng-devel libicu-devel openldap-devel >/dev/null 2>&1
     php_download
     echo "Start to install php, pls wait for a moment..." 
@@ -226,42 +223,7 @@ php_install(){
      --with-mhash\
      --with-fpm-user=www\
      --with-fpm-group=www &> /tmp/chk_php.log
-#####################previous compile options####################################    
-#    --prefix=/usr/local/php\
-#    --with-config-file-path=/usr/local/php/etc\
-#    --with-mysql=/usr/local/mysql\
-#    --with-mysqli=mysqlnd\ 
-#    --with-pdo-mysql=mysqlnd\
-#    --with-iconv-dir=/usr/local/libiconv\
-#    --with-freetype-dir\ 
-#    --with-jpeg-dir\ 
-#    --with-zlib\ 
-#    --disable-rpath\
-#    --enable-safe-mode\ 
-#    --enable-bcmath\ 
-#    --enable-shmop\ 
-#    --enable-sysvsem\ 
-#    --enable-inline-optimization\ 
-#    --with-curl\ 
-#    --with-curlwrappers\
-#    --enable-fpm\ 
-#    --enable-mbstring\ 
-#    --with-gd\ 
-#    --enable--gd-native-ttf\ 
-#    --with-openssl\
-#    --with-mhash\ 
-#    --enable-sockets\ 
-#    --with-xmlrpc\
-#    --enable-zip\ 
-#    --enable-soap\ 
-#    --enable-short-tags\ 
-#    --enable-zend-multibyte\ 
-#    --enable-static\
-#    --with-xsl\ 
-#    --with-fpm-user=nginx\ 
-#    --with-fpm-group=nginx\ 
-#    --enable-ftp
-###############################################################
+    
     [ $? -eq 0 ] && action "checking php options" /bin/true  
     echo "Start to compile php configuration for a moment..."
     [ $? -eq 0 ] && make -j4 &> /tmp/configure_php.log 
@@ -270,7 +232,7 @@ php_install(){
 }
 
 php_config(){
-    #配置php
+    #config php
     cd $download_dir/$php_folder
     cp php.ini-development  $php_dir/etc/php.ini
     sed -i 's#^;date.timezone =#date.timezone=Asia/Shanghai#' $php_dir/etc/php.ini
@@ -279,9 +241,9 @@ php_config(){
     chmod +x /etc/init.d/php-fpm
     check "Configuration php" 
     rm -rf $download_dir/$php_folder
-    #启动php-fpm
+    #start php-fpm
     [ `ps aux|grep php-fpm|wc -l` -le 1 ] && $php_dir/sbin/php-fpm
-#    service php-fpm start
+#    /etc/init.d/php-fpm start
 #    chkconfig php-fpm on
 }
 

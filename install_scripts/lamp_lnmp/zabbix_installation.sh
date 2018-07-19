@@ -8,6 +8,7 @@
 # Attention: 1. This is script is only for CentOS_x64.
 #            2. lnmp enviroment must be installed in advanced.
 #            3. The end of download file must be tar.gz
+#	     4. Create_database.sql should be put in the same folder
 ########################################################################################
 
 machine=`uname -m`
@@ -15,6 +16,7 @@ if [ $machine != "x86_64" ];then
     echo "Your system is 32bit,but this script is only run on 64bit"
     exit 1
 fi
+
 download_dir=/home/colin/tools/auto_install
 zabbix_dir=/usr/local/zabbix
 zabbix_download_url="https://jaist.dl.sourceforge.net/project/zabbix/ZABBIX%20Latest%20Stable/3.4.11/zabbix-3.4.11.tar.gz"
@@ -58,7 +60,6 @@ dependence_install(){
 }
 
 zabbix_install(){    
-    #添加zabbix用户
     user='zabbix'
     group='zabbix'
     user_exists=$(id -nu $user)
@@ -67,7 +68,7 @@ zabbix_install(){
         /usr/sbin/useradd -g $group $user -s /sbin/nologin -M
     fi
      
-    #安装zabbix
+    #install zabbix
     zabbix_download
     echo "Start to install zabbix, pls wait for a moment..."
     tar -zxf $download_file_zabbix && cd $zabbix_folder
@@ -91,7 +92,7 @@ zabbix_config(){
     mysql -uroot -p'$mysql_pwd' zabbix < $download_dir/$zabbix_folder/database/mysql/data.sql
     check "Database created"
 
-    #配置zabbix
+    #Config zabbix
     cd $zabbix_dir
     [ -d logs ] || mkdir logs
     chown zabbix:zabbix logs

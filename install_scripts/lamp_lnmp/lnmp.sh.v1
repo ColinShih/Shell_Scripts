@@ -2,13 +2,12 @@
 #!/bin/bash
 # Author: Colin
 # Mail: 499219677@qq.com
-# Time: 2018-07-12 10:58:21
+# Time: 2018-06-12 14:09:21
 # Name: a.sh
 # Version:1.0
 # Description:this is to install lnmp environment 
 # Attention: the end of download file must be tar.gz
 ###################################################
-#判断系统，改脚本只适合64位系统
 machine=`uname -m`
 if [ $machine != "x86_64" ];then
     echo "Your system is 32bit,but this script is only run on 64bit"

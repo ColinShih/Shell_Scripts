@@ -3,7 +3,7 @@
 # Author: Colin
 # Time: 2018-07-09 12:49:28
 # Name: lnmp.sh
-# Version: v1.0
+# Version: v1.3
 # Description:this is to install lnmp environment
 # Attention: This is script is only for CentOS, the end of download file must be tar.gz
 ############################################################
@@ -106,7 +106,6 @@ dependence_install(){
 }
 
 nginx_install(){    
-    #添加nginx用户
     user='nginx'
     group='nginx'
     user_exists=$(id -nu $user)
@@ -115,7 +114,7 @@ nginx_install(){
         /usr/sbin/useradd -g $group $user -s /sbin/nologin -M
     fi
      
-    #安装nginx
+    #install nginx
     nginx_download
     echo "Start to install nginx, pls wait for a moment..."
     tar -zxf $download_file_nginx && cd $nginx_folder
@@ -131,10 +130,10 @@ nginx_install(){
 }
 
 nginx_config(){    
-    #启动nginx
+    #start nginx
     [ `lsof -i :80|wc -l` -lt 1 ] && $nginx_dir/sbin/nginx
      
-    #配置nginx
+    #config nginx
     sed -i "s/^\#pid        logs\/nginx.pid;/pid        logs\/nginx.pid;/" $nginx_dir/conf/nginx.conf    
     sed -i '56a\location ~ \.php$ {\n\    root          html;\n\    fastcgi_pass  127.0.0.1:9000;\n\    fastcgi_index  index.php;\n\    fastcgi_param  SCRIPT_FILENAME  /usr/local/nginx/html$fastcgi_script_name;\n\    include        fastcgi_params;\n\}\n' $nginx_dir/conf/nginx.conf
     $nginx_dir/sbin/nginx -s reload
@@ -143,7 +142,6 @@ nginx_config(){
 }
 
 mysql_install(){
-    #添加mysql用户
     user='mysql'
     group='mysql'
     user_exists=$(id -nu $user)
@@ -152,7 +150,7 @@ mysql_install(){
         /usr/sbin/useradd -g $group $user -s /sbin/nologin -M
     fi
      
-    #安装Mysql
+    #install Mysql
     mysql_download
     echo "Start to install mysql, pls wait for a moment..." 
     tar -zxf $download_file_mysql  
@@ -162,7 +160,7 @@ mysql_install(){
 }
  
 mysql_config(){
-    #配置mysql
+    #config mysql
 #    mkdir -p /data/mysql
     echo "Start to configure mysql, pls wait for a moment..."
     chown -R mysql:mysql $mysql_dir
@@ -179,7 +177,6 @@ mysql_config(){
 }
 
 php_install(){
-    #添加php用户
     user='www'
     group='www'
     user_exists=$(id -nu $user)
@@ -188,7 +185,7 @@ php_install(){
         /usr/sbin/useradd -g $group $user -s /sbin/nologin -M
     fi
      
-    #安装php
+    #install php
     yum install -y libxml2-devel openssl-devel libcurl-devel libjpeg-devel libpng-devel libicu-devel openldap-devel >/dev/null 2>&1
     php_download
     echo "Start to install php, pls wait for a moment..." 
@@ -262,7 +259,7 @@ php_install(){
 }
 
 php_config(){
-    #配置php
+    #config php
     cd $download_dir/$php_folder
     cp php.ini-development  $php_dir/etc/php.ini
     sed -i 's#^;date.timezone =#date.timezone=Asia/Shanghai#' $php_dir/etc/php.ini
@@ -271,7 +268,7 @@ php_config(){
     chmod +x /etc/init.d/php-fpm
     check "Php configuration" 
     rm -rf $download_dir/$php_folder
-    #启动php-fpm
+    #start php-fpm
     [ `ps aux|grep php-fpm|wc -l` -le 1 ] && $php_dir/sbin/php-fpm
 #    /etc/init.d/php-fpm start
 #    chkconfig php-fpm on
