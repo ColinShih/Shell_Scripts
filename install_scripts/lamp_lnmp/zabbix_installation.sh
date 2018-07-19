@@ -96,20 +96,23 @@ zabbix_config(){
     cd $zabbix_dir
     [ -d logs ] || mkdir logs
     chown zabbix:zabbix logs
+    #modify zabbix_server.conf
     sed -i "s/^LogFile=\/tmp\/zabbix_server.log/LogFile=\/usr\/local\/zabbix\/logs\/zabbix_server.log/" $zabbix_dir/etc/zabbix_server.conf
     sed -i "s/^# PidFile=\/tmp\/zabbix_server.pid/PidFile=\/usr\/local\/zabbix\/logs\/zabbix_server.pid/" $zabbix_dir/etc/zabbix_server.conf
     sed -i "s/^# DBHost=localhost/DBHost=localhost/" $zabbix_dir/etc/zabbix_server.conf
     sed -i "s/^# DBPassword=/DBPassword=1234/" $zabbix_dir/etc/zabbix_server.conf
     sed -i "s/^# DBSocket=\/tmp\/mysql.sock/DBSocket=\/tmp\/mysql.sock/" $zabbix_dir/etc/zabbix_server.conf
-    sed -i "s/^# Include=\/usr\/local\/etc\/zabbix_server.conf.d\/\*.conf/Include=\/usr\/local\/etc\/zabbix_server.conf.d\/*.conf/" $zabbix_dir/etc/zabbix_server.conf
+    sed -i "s/^# Include=\/usr\/local\/etc\/zabbix_server.conf.d\/\*.conf/Include=$zabbix_dir\/etc\/zabbix_server.conf.d\/*.conf/" $zabbix_dir/etc/zabbix_server.conf
     
-    
+    #modify agentd_server.conf
     sed -i "s/^# PidFile=\/tmp\/zabbix_agentd.pid/PidFile=\/usr\/local\/zabbix\/logs\/zabbix_agentd.pid/" $zabbix_dir/etc/zabbix_agentd.conf
     sed -i "s/^LogFile=\/tmp\/zabbix_agentd.log/LogFile=\/usr\/local\/zabbix\/logs\/zabbix_agentd.log/" $zabbix_dir/etc/zabbix_agentd.conf
-    sed -i "s/^# Include=\/usr\/local\/etc\/zabbix_agentd.conf.d\/\*.conf/Include=\/usr\/local\/etc\/zabbix_agentd.conf.d\/*.conf/" $zabbix_dir/etc/zabbix_agentd.conf
+    sed -i "s/^# Include=\/usr\/local\/etc\/zabbix_agentd.conf.d\/\*.conf/Include=$zabbix_dir\/etc\/zabbix_agentd.conf.d\/*.conf/" $zabbix_dir/etc/zabbix_agentd.conf
+    #start zabbix_server&zabbix_agentd
     $zabbix_dir/sbin/zabbix_server
     $zabbix_dir/sbin/zabbix_agentd
 
+    #move webpage to nginx server
     mv $download_dir/$zabbix_folder/frontends/php/ /usr/local/nginx/html/zabbix
     chown -R nginx:nginx /usr/local/nginx/html/zabbix
     rm -rf $download_dir/$zabbix_folder
