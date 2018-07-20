@@ -32,9 +32,9 @@ php_download_url="http://mirrors.sohu.com/php/php-5.6.12.tar.gz"
 
 [ -f /etc/init.d/functions ] && . /etc/init.d/functions
 [ -d $download_dir ] || mkdir -p $download_dir
-[ -d $apache_dir ] || mkdir -p $apache_dir
-[ -d $mysql_dir ] || mkdir -p $mysql_dir
-[ -d $php_dir ] || mkdir -p $php_dir
+[ -d $apache_dir ] && rm -rf $apache_dir || mkdir -p $apache_dir
+[ -d $mysql_dir ] && rm -rf $mysql_dir || mkdir -p $mysql_dir
+[ -d $php_dir ] && rm -rf $php_dir || mkdir -p $php_dir
 
 cat <<EOF
     ####################################################################

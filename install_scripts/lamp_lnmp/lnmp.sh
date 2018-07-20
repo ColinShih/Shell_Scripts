@@ -8,14 +8,6 @@
 # Attention: This is script is only for CentOS, the end of download file must be tar.gz
 ############################################################
 
-#Judge OS version
-#version=`grep -o " [0-9]" /etc/redhat-release|cut -d" " -f2`
-#if [ "$version" -eq 7 ];then
-#    echo    "system version is CentOS 7"
-#else [ "$version" -eq 6 ];
-#    echo    "system version is CentOS 6"
-#fi
-
 machine=`uname -m`
 if [ $machine != "x86_64" ];then
     echo "Your system is 32bit,but this script is only run on 64bit"
@@ -31,12 +23,13 @@ mysql_download_url="http://mirrors.sohu.com/mysql/MySQL-5.6/mysql-5.6.36-linux-g
 php_download_url="http://mirrors.sohu.com/php/php-5.6.12.tar.gz"
 
 #mysql_conf_dir="/home/colin/conf/my.cnf"
+root_pwd="1234"
 
 [ -f /etc/init.d/functions ] && . /etc/init.d/functions
 [ -d $download_dir ] || mkdir -p $download_dir
-[ -d $nginx_dir ] || mkdir -p $nginx_dir
-[ -d $mysql_dir ] || mkdir -p $mysql_dir
-[ -d $php_dir ] || mkdir -p $php_dir
+[ -d $nginx_dir ] && rm -rf $nginx_dir || mkdir -p $nginx_dir
+[ -d $mysql_dir ] && rm -rf $mysql_dir || mkdir -p $mysql_dir
+[ -d $php_dir ] && rm -rf $php_dir || mkdir -p $php_dir
 
 cat <<EOF
     ####################################################################
@@ -173,6 +166,8 @@ mysql_config(){
     [ $? -eq 0 ] && action "Mysql configuration"
 
      /etc/init.d/mysqld start
+#    create admin account
+    mysqladmin -uroot password "$root_pwd"
 #    chkconfig mysqld on
 }
 
