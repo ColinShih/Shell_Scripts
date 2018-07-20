@@ -27,9 +27,6 @@ root_pwd="1234"
 
 [ -f /etc/init.d/functions ] && . /etc/init.d/functions
 [ -d $download_dir ] || mkdir -p $download_dir
-[ -d $nginx_dir ] && rm -rf $nginx_dir || mkdir -p $nginx_dir
-[ -d $mysql_dir ] && rm -rf $mysql_dir || mkdir -p $mysql_dir
-[ -d $php_dir ] && rm -rf $php_dir || mkdir -p $php_dir
 
 cat <<EOF
     ####################################################################
@@ -44,13 +41,22 @@ read -p "Pls choose the nubmer above you want to operate: " num
 
 check(){
     if [ $? -ne 0 ];then
-        action "The last command executed failed, pls check it." /bin/false
-        sleep 1
+        action "The last command executed failed, pls check in $2." /bin/false
         exit 1
     else
         action "$1" /bin/true
     fi
 }
+
+start_check(){
+    if [ $? -eq 0 ];then
+        action "Starting $1" /bin/true
+    else
+        action "Starting $1" /bin/false
+        exit 2
+    fi
+}
+    
 
 nginx_download(){
     cd $download_dir
@@ -95,7 +101,7 @@ dependence_install(){
     libjpeg-devel libpng-devel libtiff-devel freetype-devel libXpm-devel gettext-devel  pam-devel libtool libtool-ltdl\
     fontconfig-devel libxml2-devel curl-devel  libicu libicu-devel libmcrypt libmcrypt-devel libmhash libmhash-develi\
     >/dev/null 2>&1
-    check "Dependence installation"
+    check "Dependence install"
 }
 
 nginx_install(){    
@@ -113,25 +119,27 @@ nginx_install(){
     tar -zxf $download_file_nginx && cd $nginx_folder
     ./configure --prefix=$nginx_dir  --pid-path=$nginx_dir/logs/nginx.pid   --user=$user   --group=$group --with-http_ssl_module \
     --with-http_flv_module   --with-http_stub_status_module  --with-http_gzip_static_module --with-pcre &> /tmp/chk_config_nginx.log
-     
-    [ $? -eq 0 ] && action "Checking nginx options" /bin/true
+    check "Nginx options check" "/tmp/chk_config_nginx.log" 
+
     echo "Start to compile nginx configuration, pls wait for a moment..."
-    [ $? -eq 0 ] && make -j4 &> /tmp/configure_nginx.log 
-    [ $? -eq 0 ] && make install &> /tmp/make_install_nginx.log
-    check "Nginx installation" 
+    make -j4 &> /tmp/configure_nginx.log 
+    check "Nginx compile" "/tmp/configure_nginx.log"
+    make install &> /tmp/make_install_nginx.log
+    check "Nginx install" "/tmp/make_install_nginx.log" 
     rm -rf $download_dir/$nginx_folder
 }
 
 nginx_config(){    
     #start nginx
-    [ `lsof -i :80|wc -l` -lt 1 ] && $nginx_dir/sbin/nginx
-     
+    [ `lsof -i :80|wc -l` -lt 1 ] && $nginx_dir/sbin/nginx &>/dev/null
+    start_check "Nginx" 
+
     #config nginx
     sed -i "s/^\#pid        logs\/nginx.pid;/pid        logs\/nginx.pid;/" $nginx_dir/conf/nginx.conf    
     sed -i '56a\location ~ \.php$ {\n\    root          html;\n\    fastcgi_pass  127.0.0.1:9000;\n\    fastcgi_index  index.php;\n\    fastcgi_param  SCRIPT_FILENAME  /usr/local/nginx/html$fastcgi_script_name;\n\    include        fastcgi_params;\n\}\n' $nginx_dir/conf/nginx.conf
     $nginx_dir/sbin/nginx -s reload
     echo -e '<?php\n phpinfo(); \n ?>\n' >$nginx_dir/html/index.php
-    check "Nginx configuration"
+    check "Nginx configure"
 }
 
 mysql_install(){
@@ -148,7 +156,7 @@ mysql_install(){
     echo "Start to install mysql, pls wait for a moment..." 
     tar -zxf $download_file_mysql  
     [ $? -eq 0 ] && mv $mysql_folder/* $mysql_dir
-    check "Mysql installation"
+    check "Mysql install"
     rm -rf $download_dir/$mysql_folder
 }
  
@@ -158,16 +166,19 @@ mysql_config(){
     echo "Start to configure mysql, pls wait for a moment..."
     chown -R mysql:mysql $mysql_dir
     $mysql_dir/scripts/mysql_install_db  --basedir=$mysql_dir --datadir=$mysql_dir/data --user=$user &>/tmp/chk_mysql.log
-    [ $? -eq 0 ] && action "Checking mysql options" /bin/true 
+    check  "Checking mysql options" 
     cp $mysql_dir/support-files/my-default.cnf  /etc/my.cnf
+    sed -i '7d' /etc/my.cnf
+    sed -i "7a\[client]\n\default-character-set=utf8\n\port=3306\n\socket=/tmp/mysql.sock\n\[mysqld]\n\basedir=/usr/local/mysql\n\datadir=/usr/local/mysql/data\ncharacter_set_server=utf8\n\pid-file=/usr/local/mysql/data/mysql.pid\n\user=mysql\n\max_connections=1000\n " /etc/my.cnf
     cp $mysql_dir/support-files/mysql.server  /etc/init.d/mysqld
     sed -i "s#^basedir=#basedir=$mysql_dir#" /etc/init.d/mysqld
     sed -i "s#^datadir=#datadir=$mysql_dir/data#" /etc/init.d/mysqld
     [ $? -eq 0 ] && action "Mysql configuration"
 
-     /etc/init.d/mysqld start
+     /etc/init.d/mysqld start &>/dev/null
+     start_check "Mysql"
 #    create admin account
-    mysqladmin -uroot password "$root_pwd"
+    [ $? -eq 0 ] && mysqladmin -uroot password "$root_pwd"
 #    chkconfig mysqld on
 }
 
@@ -245,12 +256,12 @@ php_install(){
 #    --with-fpm-group=nginx\ 
 #    --enable-ftp
 ###############################################################
-    [ $? -eq 0 ] && action "Checking php options" /bin/true  
+    check "Checking php options" "/tmp/chk_php.log"  
     echo "Start to compile php configuration,it may take you a short time,pls be patient..."
-    [ $? -eq 0 ] && make -j4 &> /tmp/configure_php.log
-    check "Php compile"
-    [ $? -eq 0 ] && make install &> /tmp/make_install_php.log
-    check "Php install"
+    make -j4 &> /tmp/configure_php.log
+    check "Php compile" "/tmp/configure_php.log"
+    make install &> /tmp/make_install_php.log
+    check "Php install" "/tmp/configure_php.log"
 }
 
 php_config(){
@@ -264,12 +275,16 @@ php_config(){
     check "Php configuration" 
     rm -rf $download_dir/$php_folder
     #start php-fpm
-    [ `ps aux|grep php-fpm|wc -l` -le 1 ] && $php_dir/sbin/php-fpm
+    [ `ps aux|grep php-fpm|wc -l` -le 1 ] && $php_dir/sbin/php-fpm &>/dev/null
+    start_check "Php-fpm"
 #    /etc/init.d/php-fpm start
 #    chkconfig php-fpm on
 }
 
 main(){
+    [ -d $nginx_dir ] && rm -rf $nginx_dir/* || mkdir -p $nginx_dir
+    [ -d $mysql_dir ] && rm -rf $mysql_dir/* || mkdir -p $mysql_dir
+    [ -d $php_dir ] && rm -rf $php_dir/* || mkdir -p $php_dir
     dependence_install
     sleep 1
     nginx_install
@@ -293,29 +308,32 @@ if [ $? -ne 0 ];then
 fi
 case $num in
     1)
+        [ -d $nginx_dir ] && rm -rf $nginx_dir/* || mkdir -p $nginx_dir
         dependence_install
         nginx_install
         sleep 1
         nginx_config
-        echo "Installation completed! "
+        echo "Nginx installation completed! "
         ;;
     2)
+        [ -d $mysql_dir ] && rm -rf $mysql_dir/* || mkdir -p $mysql_dir
         dependence_install
         mysql_install
         sleep 1
         mysql_config
-        echo "Installation completed! "
+        echo "Mysql installation completed! "
         ;;
     3)
+        [ -d $php_dir ] && rm -rf $php_dir/* || mkdir -p $php_dir
         dependence_install
         php_install
         sleep 1
         php_config
-        echo "Installation completed! "
+        echo "Php installation completed! "
         ;;
     4)
         main
-        echo "Installation completed! "
+        echo "LNMP installation completed! "
         ;;
     *)
         echo "The number you input must be [1|2|3|4]."

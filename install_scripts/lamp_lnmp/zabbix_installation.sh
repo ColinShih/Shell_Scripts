@@ -29,15 +29,23 @@ php_group="www"
 
 [ -f /etc/init.d/functions ] && . /etc/init.d/functions
 [ -d $download_dir ] || mkdir -p $download_dir
-[ -d $zabbix_dir ] && rm -rf $zabbix_dir || mkdir -p $zabbix_dir
+[ -d $zabbix_dir ] && rm -rf $zabbix_dir/* || mkdir -p $zabbix_dir
 
 check(){
     if [ $? -ne 0 ];then
-        action "The last command executed failed, pls check it." /bin/false
-        sleep 1
+        action "The last command executed failed, pls check in $2." /bin/false
         exit 1
     else
         action "$1" /bin/true
+    fi
+}
+
+start_check(){
+    if [ $? -eq 0 ];then
+        action "$1 start" /bin/true
+    else
+        action "$1 start" /bin/false
+        exit 2
     fi
 }
 
@@ -74,12 +82,12 @@ zabbix_install(){
     tar -zxf $download_file_zabbix && cd $zabbix_folder
     ./configure --prefix=/usr/local/zabbix --enable-server --enable-agent --with-mysql --enable-ipv6\
     --with-net-snmp --with-libcurl --with-libxml2 &> /tmp/chk_config_zabbix.log
-     
-    [ $? -eq 0 ] && action "Checking zabbix options" /bin/true
+    check "Zabbix options check" "/tmp/chk_config_zabbix.log"
     echo "Start to compile zabbix configuration, pls wait for a moment..."
-    [ $? -eq 0 ] && make -j4 &> /tmp/configure_zabbix.log 
-    [ $? -eq 0 ] && make install &> /tmp/make_install_zabbix.log
-    check "Zabbix installation" 
+    make -j4 &> /tmp/configure_zabbix.log 
+    check "Zabbix compile" "/tmp/configure_zabbix.log"
+    make install &> /tmp/make_install_zabbix.log
+    check "Zabbix install" "/tmp/make_install_zabbix.log" 
 }
 
 zabbix_config(){    
@@ -110,21 +118,21 @@ zabbix_config(){
     sed -i "s|^# Include=/usr/local/etc/zabbix_agentd.conf.d/\*.conf|Include=$zabbix_dir/etc/zabbix_agentd.conf.d/*.conf|" $zabbix_dir/etc/zabbix_agentd.conf
     check "Agent server change"
     #start zabbix_server&zabbix_agentd
-    $zabbix_dir/sbin/zabbix_server
-    $zabbix_dir/sbin/zabbix_agentd
-    check "Server start"
+    $zabbix_dir/sbin/zabbix_server &>/dev/null
+    start_check "Zabbix_server"
+    $zabbix_dir/sbin/zabbix_agentd &>/dev/null
+    start_check "Zabbix_agentd"
 
     #copy webpage to  server
-    cp -r $download_dir/$zabbix_folder/frontends/php /usr/local/nginx/html/zabbix
+    cp -r $download_dir/$zabbix_folder/frontends/php/* /usr/local/nginx/html/zabbix
     chown -R nginx:nginx /usr/local/nginx/html/zabbix
     #copy start scripts to /etc/init.d
     cd $download_dir/$zabbix_folder/misc/init.d/fedora/core5/
     cp zabbix_agentd zabbix_server /etc/init.d
     [ -f /usr/local/sbin/zabbix_agentd ] || ln -s $zabbix_dir/sbin/zabbix_agentd /usr/local/sbin
     [ -f /usr/local/sbin/zabbix_server ] || ln -s $zabbix_dir/sbin/zabbix_server /usr/local/sbin
-    
-    rm -rf $download_dir/$zabbix_folder
     check "Zabbix configuration"
+    rm -rf $download_dir/$zabbix_folder
 }
 
 change_php_config(){
@@ -143,12 +151,14 @@ change_php_config(){
 #    sed -i "s/^\$DB\['PORT'\]\t\t\t = '0';/\$DB\['PORT'\]             = '3306';/" $nginx_dir/html/zabbix/conf/zabbix.conf.php
 #    sed -i "s/^\$DB\['PASSWORD'\]\t\t\t = '';/\$DB\['PASSWORD'\]         = '1234';/" $nginx_dir/html/zabbix/conf/zabbix.conf.php
     chown -R $php_user:$php_group $nginx_dir/html/zabbix/conf
-    check "Php config change"
+    check "Php configuration file change"
 
     killall php-fpm
-    /etc/init.d/php-fpm start
+    [ ps aux|grep php-fpm|wc -l -le 1 ] && /etc/init.d/php-fpm start &>/dev/null
+    start_check "Php-fpm"
     $nginx_dir/sbin/nginx -s stop
     $nginx_dir/sbin/nginx
+    start_check "Nginx"
 }
 
 main(){
@@ -157,7 +167,7 @@ main(){
     zabbix_install
     sleep 1
     zabbix_config
-    echo "Installation completed! "
+    echo "Zabbix installation completed! "
     change_php_config
     echo "Pls open Zabbix URL: http://<server_ip_or_name>/zabbix/setup.php in your brower and start installing frontend"
 }
