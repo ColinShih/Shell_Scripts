@@ -6,6 +6,10 @@
 # Version: v1.3
 # Description:this is to install lnmp environment
 # Attention: This is script is only for CentOS, the end of download file must be tar.gz
+#            both CentOS6,CentOS7 can be used
+#            nginx version: 1.8.1
+#            mysql version: 5.6.36
+#            php version:  5.6.12
 ############################################################
 
 machine=`uname -m`
