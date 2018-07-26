@@ -1,4 +1,4 @@
-###########################################################
+#########################################################################################
 #!/bin/bash
 # Author: Colin
 # Time: 2018-07-09 12:49:28
@@ -7,10 +7,11 @@
 # Description:this is to install lnmp environment
 # Attention: This is script is only for CentOS, the end of download file must be tar.gz
 #            both CentOS6,CentOS7 can be used
+#            For mysql installation, using binary package, and no multiple instances used
 #            nginx version: 1.8.1
 #            mysql version: 5.6.36
 #            php version:  5.6.12
-############################################################
+#########################################################################################
 
 machine=`uname -m`
 if [ $machine != "x86_64" ];then
@@ -23,7 +24,10 @@ nginx_dir=/usr/local/nginx
 mysql_dir=/usr/local/mysql
 php_dir=/usr/local/php
 nginx_download_url="http://nginx.org/download/nginx-1.8.1.tar.gz"
-mysql_download_url="http://mirrors.sohu.com/mysql/MySQL-5.6/mysql-5.6.36-linux-glibc2.5-x86_64.tar.gz"
+#binary package
+#mysql_download_url="http://mirrors.sohu.com/mysql/MySQL-5.6/mysql-5.6.36-linux-glibc2.5-x86_64.tar.gz"
+#source code package
+mysql_download_url="https://mirrors.tuna.tsinghua.edu.cn/mysql/downloads/MySQL-5.6/mysql-5.6.39.tar.gz"
 php_download_url="http://mirrors.sohu.com/php/php-5.6.12.tar.gz"
 
 #mysql_conf_dir="/home/colin/conf/my.cnf"
@@ -155,7 +159,7 @@ mysql_install(){
         /usr/sbin/useradd -g $group $user -s /sbin/nologin -M
     fi
      
-    #install Mysql
+    #install Mysql using binary package
     mysql_download
     echo "Start to install mysql, pls wait for a moment..." 
     tar -zxf $download_file_mysql  
@@ -169,11 +173,11 @@ mysql_config(){
 #    mkdir -p /data/mysql
     echo "Start to configure mysql, pls wait for a moment..."
     chown -R mysql:mysql $mysql_dir
-    $mysql_dir/scripts/mysql_install_db  --basedir=$mysql_dir --datadir=$mysql_dir/data --user=$user &>/tmp/chk_mysql.log
+    $mysql_dir/scripts/mysql_install_db  --basedir=$mysql_dir --datadir=/data/3306/data --user=$user &>/tmp/chk_mysql.log
     check  "Checking mysql options" 
     cp $mysql_dir/support-files/my-default.cnf  /etc/my.cnf
     sed -i '7d' /etc/my.cnf
-    sed -i "7a\[client]\n\default-character-set=utf8\n\port=3306\n\socket=/tmp/mysql.sock\n\[mysqld]\n\basedir=/usr/local/mysql\n\datadir=/usr/local/mysql/data\ncharacter_set_server=utf8\n\pid-file=/usr/local/mysql/data/mysql.pid\n\user=mysql\n\max_connections=1000\n " /etc/my.cnf
+    sed -i "22a\[client]\n\default-character-set=utf8\n\port=3306\n\socket=/tmp/mysql.sock\n\[mysqld]\n\basedir=/usr/local/mysql\n\datadir=/usr/local/mysql/data\ncharacter_set_server=utf8\n\pid-file=/usr/local/mysql/data/mysql.pid\n\user=mysql\n\max_connections=1000\n " /etc/my.cnf
     cp $mysql_dir/support-files/mysql.server  /etc/init.d/mysqld
     sed -i "s#^basedir=#basedir=$mysql_dir#" /etc/init.d/mysqld
     sed -i "s#^datadir=#datadir=$mysql_dir/data#" /etc/init.d/mysqld
