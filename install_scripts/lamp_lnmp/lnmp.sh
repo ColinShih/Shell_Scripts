@@ -226,6 +226,9 @@ php_install(){
      --with-freetype-dir=/usr/lib\
      --with-gettext\
      --with-mhash\
+     --with-mysql-sock=/data/3306/mysql.sock\
+     --with-mysqli=mysqlnd\
+     --with-pdo-mysql=mysqlnd\
      --with-fpm-user=$user\
      --with-fpm-group=$group &> /tmp/chk_php.log
 #####################previous compile options####################################    

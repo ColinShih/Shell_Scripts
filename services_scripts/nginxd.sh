@@ -40,7 +40,8 @@ stop(){
         RETVAL=$?
     else
         kill -USR2 `cat $pidfile`
-        rm -f $pidfile
+        rm -rf $pidfile &>/dev/null
+        killproc $bindir
         pkill nginx
         judge Stopping
     fi
