@@ -3,7 +3,7 @@
 # Author: Colin
 # Mail: 499219677@qq.com
 # Time: 2018-07-17 22:17:12
-# Name: mysqld_multi_instances_start.sh
+# Name: mysqld_multi_instance_start.sh
 # Version:1.0
 # Description: multiple_instance mysql start scripts
 ###########################################################
@@ -30,29 +30,31 @@ if [ $# -ne 2 ];then
 fi
 
 start(){
-    if [ -f $pid_file ];then
+    if [ `lsof -i :$port|wc -l` -ne 0 ];then
+#    if [ -f $pid_file ];then
         echo "mysql $port is already running.."
         RETVAL=2
     else
         $mysql_start >/dev/null 2>&1 &
         sleep 5
         if [ -f $pid_file ];then
-            action "Start mysql $port" /bin/true
+            action "Starting mysql $port" /bin/true
         else
-            action "Start mysql $port" /bin/false
+            action "Starting mysql $port" /bin/false
         fi
     fi
     return $RETVAL
 }
 
 stop(){
-    if [ -f $pid_file ];then
+    if [ `lsof -i :$port|wc -l` -ne 0 ];then
+#    if [ -f $pid_file ];then
         $mysql_stop >/dev/null 2>&1
         RETVAL=$?
         if [ $RETVAL -eq 0 ];then
-            action "Stop mysql $port" /bin/true
+            action "Stoping mysql $port" /bin/true
         else
-            action "Stop mysql $port" /bin/false
+            action "Stoping mysql $port" /bin/false
         fi
     else
         echo "Mysql $port is already stopped"
@@ -70,7 +72,8 @@ restart(){
 }
 
 status(){
-    if [ -f $pid_file ];then
+    if [ `lsof -i :$port|wc -l` -ne 0 ];then
+#    if [ -f $pid_file ];then
         echo "mysql $port is running.."
     else
         echo "mysql $port is stopped.."
