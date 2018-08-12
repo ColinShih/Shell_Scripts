@@ -115,7 +115,7 @@ dependence_install(){
 nginx_install(){    
     user='nginx'
     group='nginx'
-    user_exists=$(id -nu $user)
+    user_exists=$(id -nu $user) &>/dev/null
     if [ ! $user_exists ]; then
         /usr/sbin/groupadd -f $group
         /usr/sbin/useradd -g $group $user -s /sbin/nologin -M
@@ -153,7 +153,7 @@ nginx_config(){
 mysql_install(){
     user='mysql'
     group='mysql'
-    user_exists=$(id -nu $user)
+    user_exists=$(id -nu $user) &>/dev/null
     if [ ! $user_exists ]; then
         /usr/sbin/groupadd -f $group
         /usr/sbin/useradd -g $group $user -s /sbin/nologin -M
@@ -193,7 +193,7 @@ mysql_config(){
 php_install(){
     user='www'
     group='www'
-    user_exists=$(id -nu $user)
+    user_exists=$(id -nu $user) &>/dev/null
     if [ ! $user_exists ]; then
         /usr/sbin/groupadd -f $group
         /usr/sbin/useradd -g $group $user -s /sbin/nologin -M
