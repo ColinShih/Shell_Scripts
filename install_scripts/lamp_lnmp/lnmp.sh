@@ -19,15 +19,15 @@ if [ $machine != "x86_64" ];then
     exit 1
 fi
 
-download_dir=/home/colin/tools/auto_install
+download_dir=/server/tools
 nginx_dir=/usr/local/nginx
 mysql_dir=/usr/local/mysql
 php_dir=/usr/local/php
 nginx_download_url="http://nginx.org/download/nginx-1.8.1.tar.gz"
 #binary package
-#mysql_download_url="http://mirrors.sohu.com/mysql/MySQL-5.6/mysql-5.6.36-linux-glibc2.5-x86_64.tar.gz"
+mysql_download_url="http://mirrors.sohu.com/mysql/MySQL-5.6/mysql-5.6.36-linux-glibc2.5-x86_64.tar.gz"
 #source code package
-mysql_download_url="https://mirrors.tuna.tsinghua.edu.cn/mysql/downloads/MySQL-5.6/mysql-5.6.39.tar.gz"
+#mysql_download_url="https://mirrors.tuna.tsinghua.edu.cn/mysql/downloads/MySQL-5.6/mysql-5.6.39.tar.gz"
 php_download_url="http://mirrors.sohu.com/php/php-5.6.12.tar.gz"
 
 #mysql_conf_dir="/home/colin/conf/my.cnf"

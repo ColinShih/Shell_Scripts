@@ -25,7 +25,7 @@ download_dir=/home/colin/tools/auto_install
 apache_dir=/usr/local/apache2
 mysql_dir=/usr/local/mysql
 php_dir=/usr/local/php
-apache_download_url="http://mirrors.sohu.com/apache/httpd-2.4.34.tar.gz"
+apache_download_url="https://mirrors.tuna.tsinghua.edu.cn/apache/httpd/httpd-2.4.34.tar.gz"
 mysql_download_url="http://mirrors.sohu.com/mysql/MySQL-5.6/mysql-5.6.36-linux-glibc2.5-x86_64.tar.gz"
 php_download_url="http://mirrors.sohu.com/php/php-5.6.12.tar.gz"
 
@@ -109,7 +109,7 @@ dependence_install(){
     gzip net-snmp-devel net-snmp ncurses-devel pcre pcre-devel openssl openssl-devel\
     libjpeg-devel libpng-devel libtiff-devel freetype-devel libXpm-devel gettext-devel  pam-devel libtool libtool-ltdl\
     fontconfig-devel libxml2-devel curl-devel  libicu libicu-devel libmcrypt libmcrypt-devel libmhash libmhash-develi\
-    >/dev/null 2>&1
+    expat-devel libcurl >/dev/null 2>&1
     check "Dependence installation"
 }
 
@@ -129,7 +129,7 @@ apache_install(){
     tar -zxf $download_file_apache && cd $apache_folder
     ./configure --prefix=$apache_dir  --with-mpm=worker --enable-cache --enable-disk-cache\
      --enable-mem-cache--enable-file-cache --enable-nonportable-atomics --with-included-apr  --enable-mods-shared=most\
-     --enable-so--enable-rewrite --enable-ssl &>/dev/null
+     --enable-so--enable-rewrite --enable-ssl &>/tmp/conf_httpd.log
      
     [ $? -eq 0 ] && action "Checking apache options" /bin/true
     echo "Start to compile apache configuration, pls wait for a moment..."

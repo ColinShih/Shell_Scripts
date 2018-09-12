@@ -93,6 +93,10 @@ zabbix_install(){
 zabbix_config(){    
     cd /usr/local && chown -R zabbix:zabbix zabbix
     mysql -uroot -p"$mysql_pwd" < $create_database_script
+#    mysql -uroot -p"$mysql_pwd" -e "DROP DATABASE IF EXISTS zabbix;"
+#    mysql -uroot -p"$mysql_pwd" -e "CREATE DATABASE zabbix default character set utf8 collate utf8_general_ci;"
+#    mysql -uroot -p"$mysql_pwd" -e "grant all privileges on zabbix.* to zabbix@localhost identified by '1234';"
+#    mysql -uroot -p"$mysql_pwd" -e "use zabbix;"
     sleep 1
     mysql -uroot -p"$mysql_pwd" zabbix < $download_dir/$zabbix_folder/database/mysql/schema.sql
     mysql -uroot -p"$mysql_pwd" zabbix < $download_dir/$zabbix_folder/database/mysql/images.sql
